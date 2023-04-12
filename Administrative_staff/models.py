@@ -15,7 +15,7 @@ class Concours(models.Model):
 class Sujet(models.Model):
 
     id_sujet = models.AutoField(primary_key=True)
-    id_concours = models.OneToOneField(Concours, on_delete=models.CASCADE, blank=False,
+    id_concours = models.ForeignKey(Concours, on_delete=models.CASCADE, blank=False,
                                        null=False, db_column='id_concours', to_field='id_concours')
 
     description = models.CharField(max_length=500, null=False, blank=False)

@@ -12,7 +12,7 @@ class Condidat(models.Model):
     code_anonyme = models.CharField(db_index=True, max_length=25, unique=True, blank=False, null=True)
     specailite = models.CharField(db_index=True, max_length=25, blank=False, null=False)
 
-    id_concours = models.OneToOneField(Concours, on_delete=models.CASCADE, blank=False,
+    id_concours = models.ForeignKey(Concours, on_delete=models.CASCADE, blank=False,
                                        null=False, db_column='id_concours', to_field='id_concours')
     
     class Meta:
@@ -30,7 +30,7 @@ class Enseignant(models.Model):
 class Notification_Condidats(models.Model):
 
     id_notification_condidat = models.AutoField(primary_key=True)
-    id_condidat = models.OneToOneField(Condidat, on_delete=models.CASCADE, blank=False,
+    id_condidat = models.ForeignKey(Condidat, on_delete=models.CASCADE, blank=False,
                                        null=False, db_column='id_condidat', to_field='id_condidat')
     contenu = models.CharField(max_length=500, blank=False, null=False)
     date_notification = models.DateTimeField(auto_now=True, null=False, blank=False)
@@ -42,7 +42,7 @@ class Notification_Condidats(models.Model):
 class Notification_Enseignants(models.Model):
 
     id_notification_enseignant = models.AutoField(primary_key=True)
-    id_enseignant = models.OneToOneField(Enseignant, on_delete=models.CASCADE, blank=False,
+    id_enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, blank=False,
                                          null=False, db_column='id_enseignant', to_field='id_enseignant')
     contenu = models.CharField(max_length=500, null=False, blank=False)
     date_notification = models.DateTimeField(auto_now=True, null=False, blank=False)
@@ -61,9 +61,9 @@ def validate_decimals(value):
         
 class Correction(models.Model):
 
-    id_enseignant = models.OneToOneField(Enseignant, on_delete=models.CASCADE, blank=False,
+    id_enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, blank=False,
                                          null=False, db_column='id_enseignant', to_field='id_enseignant')
-    code_anonyme_condidat = models.OneToOneField(Condidat, on_delete=models.CASCADE, blank=False,
+    code_anonyme_condidat = models.ForeignKey(Condidat, on_delete=models.CASCADE, blank=False,
                                                  null=False, db_column='code_anonyme_condidat', to_field='code_anonyme')
     note = models.FloatField(default=0.00, validators=[validate_decimals], null=False, blank=False)
     NB_CORRECTION = [
@@ -79,7 +79,7 @@ class Correction(models.Model):
 
 class Presence(models.Model):
 
-    id_enseignant = models.OneToOneField(Enseignant, on_delete=models.CASCADE, blank=False,
+    id_enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, blank=False,
                                          null=False, db_column='id_enseignant', to_field='id_enseignant')
     id_condidat = models.OneToOneField(Condidat, on_delete=models.CASCADE, blank=False,
                                        null=False, db_column='id_condidat', to_field='id_condidat')
@@ -93,11 +93,11 @@ class Presence(models.Model):
 class Reclamation(models.Model):
 
     id_reclamation = models.AutoField(primary_key=True)
-    id_condidat = models.OneToOneField(Condidat, on_delete=models.CASCADE, blank=False,
+    id_condidat = models.ForeignKey(Condidat, on_delete=models.CASCADE, blank=False,
                                        null=False, db_column='id_condidat', to_field='id_condidat')
     contenu = models.CharField(max_length=500, null=False, blank=False)
     date = models.DateTimeField(auto_now=True, null=False, blank=False)
-    Reponse = models.CharField(max_length=500, null=False, blank=False)
+    Reponse = models.CharField(max_length=500, null=True, blank=False)
 
     class Meta:
         db_table = 'reclamation'
@@ -105,7 +105,7 @@ class Reclamation(models.Model):
 class These(models.Model):
 
     id_these = models.AutoField(primary_key=True)
-    id_enseignant = models.OneToOneField(Enseignant, on_delete=models.CASCADE, blank=False,
+    id_enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, blank=False,
                                          null=False, db_column='id_enseignant', to_field='id_enseignant')
     sujet = models.CharField(max_length=200, null=False, blank=False)
     description = models.CharField(max_length=500, null=False, blank=False)
@@ -115,9 +115,9 @@ class These(models.Model):
 
 class Choix(models.Model):
 
-    id_condidat = models.OneToOneField(Condidat, on_delete=models.CASCADE, blank=False,
+    id_condidat = models.ForeignKey(Condidat, on_delete=models.CASCADE, blank=False,
                                        null=False, db_column='id_condidat', to_field='id_condidat')
-    id_these = models.OneToOneField(These, on_delete=models.CASCADE, blank=False,
+    id_these = models.ForeignKey(These, on_delete=models.CASCADE, blank=False,
                                     null=False, db_column='id_these', to_field='id_these')
 
     etat = models.BooleanField(default=False, null=False, blank=False)
