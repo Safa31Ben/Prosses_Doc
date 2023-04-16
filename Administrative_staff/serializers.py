@@ -1,10 +1,10 @@
 from dataclasses import fields
 from rest_framework import serializers
 from .models import *
+from Enseignant_candidat.models import Reclamation
 
+class ReclamationSerializers(serializers.ModelSerializer):
 
-# class ClassSerializers(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = Class
-#         fields = '__all__'
+    class Meta:
+        model = Reclamation
+        fields = '__all__'

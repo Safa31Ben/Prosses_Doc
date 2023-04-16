@@ -3,5 +3,5 @@ from . import views
 
 urlpatterns = [
 
-    # path('apiName/', views.apiMethodeName, name="apiName"),
+    path('consulterReclamations/', views.getReclamations, name="consulterReclamations"),
 ]

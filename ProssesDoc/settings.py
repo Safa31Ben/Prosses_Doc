@@ -137,7 +137,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'images')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 ## For custom user model ##
-AUTH_USER_MODEL = 'Gestion.Utulisateur'
+AUTH_USER_MODEL = 'Gestion.Utilisateur'
 
 # Rest framwork authentications
 REST_FRAMEWORK = {
