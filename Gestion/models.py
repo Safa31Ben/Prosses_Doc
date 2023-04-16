@@ -21,7 +21,7 @@ class UserManager(BaseUserManager):
 def get_profile_pic(self):
     return f'images\{self.username}'
 
-class Utulisateur(AbstractBaseUser, PermissionsMixin):
+class Utilisateur(AbstractBaseUser, PermissionsMixin):
     id = models.AutoField(primary_key=True)
     TYPE = [
         ('admin', 'Admin'),
@@ -58,4 +58,4 @@ class Utulisateur(AbstractBaseUser, PermissionsMixin):
         return f'{self.prenom} {self.nom}'
 
     class Meta:
-            db_table = 'utulisateur'
+            db_table = 'utilisateur'

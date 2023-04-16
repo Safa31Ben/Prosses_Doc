@@ -35,15 +35,6 @@ class Base64ImageField(serializers.ImageField):
         extension = "jpg" if extension == "jpeg" else extension
 
         return extension
-
-class AutherSerializers(serializers.ModelSerializer):
-    profile_pic = Base64ImageField(
-        max_length=None, use_url=True, required=False
-    )
-
-    class Meta:
-        model = Utulisateur
-        fields = '__all__'
     
 # class ClassSerializers(serializers.ModelSerializer):
 

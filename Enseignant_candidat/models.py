@@ -2,53 +2,8 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from Gestion.models import Utulisateur
+from Gestion.models import Utilisateur
 from Administrative_staff.models import Concours
-
-class Condidat(models.Model):
-    id_condidat = models.OneToOneField(Utulisateur, on_delete=models.CASCADE, blank=False,
-                                       null=False, db_column='id_condidat', to_field='id', primary_key=True)
-    universite = models.CharField(max_length=200, blank=False, null=False)
-    code_anonyme = models.CharField(db_index=True, max_length=25, unique=True, blank=False, null=True)
-    specailite = models.CharField(db_index=True, max_length=25, blank=False, null=False)
-
-    id_concours = models.ForeignKey(Concours, on_delete=models.CASCADE, blank=False,
-                                       null=False, db_column='id_concours', to_field='id_concours')
-    
-    class Meta:
-        db_table = 'condidat'
-
-
-class Enseignant(models.Model):
-    id_enseignant = models.OneToOneField(Utulisateur, on_delete=models.CASCADE, blank=False,
-                                         null=False, db_column='id_enseignant', to_field='id', primary_key=True)
-    grade = models.CharField(max_length=5, blank=False, null=False)
-
-    class Meta:
-        db_table = 'enseignant'
-
-class Notification_Condidats(models.Model):
-
-    id_notification_condidat = models.AutoField(primary_key=True)
-    id_condidat = models.ForeignKey(Condidat, on_delete=models.CASCADE, blank=False,
-                                       null=False, db_column='id_condidat', to_field='id_condidat')
-    contenu = models.CharField(max_length=500, blank=False, null=False)
-    date_notification = models.DateTimeField(auto_now=True, null=False, blank=False)
-
-    class Meta:
-        db_table = 'notification_condidats'
-
-
-class Notification_Enseignants(models.Model):
-
-    id_notification_enseignant = models.AutoField(primary_key=True)
-    id_enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, blank=False,
-                                         null=False, db_column='id_enseignant', to_field='id_enseignant')
-    contenu = models.CharField(max_length=500, null=False, blank=False)
-    date_notification = models.DateTimeField(auto_now=True, null=False, blank=False)
-
-    class Meta:
-        db_table = 'notification_enseignants'
 
 
 def validate_decimals(value):
@@ -59,12 +14,59 @@ def validate_decimals(value):
     except:
         raise ValidationError(_(f'{value} is not an integer or a float number'),)
         
+class Candidat(models.Model):
+    id_candidat = models.OneToOneField(Utilisateur, on_delete=models.CASCADE, blank=False,
+                                       null=False, db_column='id_candidat', to_field='id', primary_key=True)
+    universite = models.CharField(max_length=200, blank=False, null=False)
+    code_anonyme = models.CharField(db_index=True, max_length=25, unique=True, blank=False, null=True)
+    specailite = models.CharField(db_index=True, max_length=25, blank=False, null=False)
+
+    id_concours = models.ForeignKey(Concours, on_delete=models.CASCADE, blank=False,
+                                       null=False, db_column='id_concours', to_field='id_concours')
+    moyenne = models.FloatField(default=0.00, validators=[validate_decimals], null=False, blank=False)
+    class Meta:
+        db_table = 'candidat'
+
+
+class Enseignant(models.Model):
+    id_enseignant = models.OneToOneField(Utilisateur, on_delete=models.CASCADE, blank=False,
+                                         null=False, db_column='id_enseignant', to_field='id', primary_key=True)
+    grade = models.CharField(max_length=5, blank=False, null=False)
+
+    class Meta:
+        db_table = 'enseignant'
+
+class Notification_Candidats(models.Model):
+
+    id_notification_candidat = models.AutoField(primary_key=True)
+    id_candidat = models.ForeignKey(Candidat, on_delete=models.CASCADE, blank=False,
+                                       null=False, db_column='id_candidat', to_field='id_candidat')
+    contenu = models.CharField(max_length=500, blank=False, null=False)
+    date_notification = models.DateTimeField(auto_now=True, null=False, blank=False)
+    vu = models.BooleanField(default=False, null=False, blank=False)
+
+    class Meta:
+        db_table = 'notification_candidats'
+
+
+class Notification_Enseignants(models.Model):
+
+    id_notification_enseignant = models.AutoField(primary_key=True)
+    id_enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, blank=False,
+                                         null=False, db_column='id_enseignant', to_field='id_enseignant')
+    contenu = models.CharField(max_length=500, null=False, blank=False)
+    date_notification = models.DateTimeField(auto_now=True, null=False, blank=False)
+    vu = models.BooleanField(default=False, null=False, blank=False)
+
+    class Meta:
+        db_table = 'notification_enseignants'
+
 class Correction(models.Model):
 
     id_enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, blank=False,
                                          null=False, db_column='id_enseignant', to_field='id_enseignant')
-    code_anonyme_condidat = models.ForeignKey(Condidat, on_delete=models.CASCADE, blank=False,
-                                                 null=False, db_column='code_anonyme_condidat', to_field='code_anonyme')
+    code_anonyme_candidat = models.ForeignKey(Candidat, on_delete=models.CASCADE, blank=False,
+                                                 null=False, db_column='code_anonyme_candidat', to_field='code_anonyme')
     note = models.FloatField(default=0.00, validators=[validate_decimals], null=False, blank=False)
     NB_CORRECTION = [
         (1, '1er'),
@@ -74,27 +76,27 @@ class Correction(models.Model):
     numero_de_correction = models.IntegerField(choices=NB_CORRECTION, null=False, blank=False)
 
     class Meta:
-        unique_together = (('id_enseignant', 'code_anonyme_condidat'),)
+        unique_together = (('id_enseignant', 'code_anonyme_candidat'),)
         db_table = 'correction'
 
 class Presence(models.Model):
 
     id_enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, blank=False,
                                          null=False, db_column='id_enseignant', to_field='id_enseignant')
-    id_condidat = models.OneToOneField(Condidat, on_delete=models.CASCADE, blank=False,
-                                       null=False, db_column='id_condidat', to_field='id_condidat')
+    id_candidat = models.OneToOneField(Candidat, on_delete=models.CASCADE, blank=False,
+                                       null=False, db_column='id_candidat', to_field='id_candidat')
     etat_presence = models.BooleanField(default=False, null=False, blank=False)
     date = models.DateTimeField(auto_now=True, null=False, blank=False)
 
     class Meta:
-        unique_together = (('id_enseignant', 'id_condidat'),)
+        unique_together = (('id_enseignant', 'id_candidat'),)
         db_table = 'presence'
 
 class Reclamation(models.Model):
 
     id_reclamation = models.AutoField(primary_key=True)
-    id_condidat = models.ForeignKey(Condidat, on_delete=models.CASCADE, blank=False,
-                                       null=False, db_column='id_condidat', to_field='id_condidat')
+    id_candidat = models.ForeignKey(Candidat, on_delete=models.CASCADE, blank=False,
+                                       null=False, db_column='id_candidat', to_field='id_candidat')
     contenu = models.CharField(max_length=500, null=False, blank=False)
     date = models.DateTimeField(auto_now=True, null=False, blank=False)
     Reponse = models.CharField(max_length=500, null=True, blank=False)
@@ -115,8 +117,8 @@ class These(models.Model):
 
 class Choix(models.Model):
 
-    id_condidat = models.ForeignKey(Condidat, on_delete=models.CASCADE, blank=False,
-                                       null=False, db_column='id_condidat', to_field='id_condidat')
+    id_candidat = models.ForeignKey(Candidat, on_delete=models.CASCADE, blank=False,
+                                       null=False, db_column='id_candidat', to_field='id_candidat')
     id_these = models.ForeignKey(These, on_delete=models.CASCADE, blank=False,
                                     null=False, db_column='id_these', to_field='id_these')
 
@@ -124,5 +126,5 @@ class Choix(models.Model):
     order = models.PositiveIntegerField(null=False, blank=False)
 
     class Meta:
-        unique_together = (('id_these', 'id_condidat'),)
+        unique_together = (('id_these', 'id_candidat'),)
         db_table = 'choix' 
