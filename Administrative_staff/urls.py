@@ -5,4 +5,6 @@ urlpatterns = [
 
     path('consulterReclamations/', views.getReclamations, name="consulterReclamations"),
     path('consulterRessourcesHumains/', views.getRessourcesHumains, name="consulterRessourcesHumains"),
+    path('partagerAnnonces/', views.partagerAnnonces, name="partagerAnnonces"),
+
 ]

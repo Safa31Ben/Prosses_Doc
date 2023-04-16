@@ -46,3 +46,13 @@ def getRessourcesHumains(request):
             return Response({"enseignants":enseignants})
         else:
             return Response({'RessourcesHumains': 'No enseignants, No candidats'})
+
+@api_view(['POST'])
+def partagerAnnonces(request):
+    if request.method == 'POST':
+        serializer = AnnonceSerializers(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors)

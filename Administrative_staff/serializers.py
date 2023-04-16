@@ -8,3 +8,10 @@ class ReclamationSerializers(serializers.ModelSerializer):
     class Meta:
         model = Reclamation
         fields = '__all__'
+
+class AnnonceSerializers(serializers.ModelSerializer):
+
+    class Meta:
+        model = Annonce
+        fields = '__all__'
+
