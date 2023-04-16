@@ -5,11 +5,10 @@ from .serializers import *
 from rest_framework.response import Response
 from .models import *
 from Enseignant_candidat.models import Reclamation
+from Gestion.models import Utilisateur
 
 from django.contrib.auth.decorators import *
 from rest_framework import status
-
-# Create your views here.
 
 @api_view(['GET'])
 def getReclamations(request):
@@ -20,3 +19,30 @@ def getReclamations(request):
             return Response(serialiers.data)
         else:
             return Response({'reclamations': 'No reclamations'})
+        
+@api_view(['GET'])
+def getRessourcesHumains(request):
+    if request.method == 'GET':
+        candidats = Utilisateur.objects.extra(
+            select={
+                'universite': "select universite from candidat where utilisateur.id=id_candidat",
+                'specailite': "select specailite from candidat where utilisateur.id=id_candidat",
+                'moyenne': "select moyenne from candidat where utilisateur.id=id_candidat",
+
+                'concours': "select annee_concours from candidat, concours where candidat.id_concours=concours.id_concours",
+                },
+        ).filter(type = 'candidat').values("universite", "specailite", "moyenne", "concours", "type", "email", "nom", "prenom", "date_naissance", "profile_pic")
+        enseignants = Utilisateur.objects.extra(
+            select={
+                'grade': "select grade from enseignant where utilisateur.id=id_enseignant",
+                },
+        ).filter(type = 'enseignant').values("grade","type", "email", "nom", "prenom", "date_naissance", "profile_pic")
+        
+        if candidats and enseignants:
+            return Response({"enseignants":enseignants, "candidats":candidats})
+        elif candidats:
+            return Response({"candidats":candidats})
+        elif enseignants:
+            return Response({"enseignants":enseignants})
+        else:
+            return Response({'RessourcesHumains': 'No enseignants, No candidats'})
