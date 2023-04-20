@@ -1,12 +1,13 @@
 from django.db import models
-
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 class Concours(models.Model):
 
     id_concours = models.AutoField(primary_key=True)
     salle = models.CharField(max_length=50, null=False, blank=False)
     date = models.DateField(null=False, blank=False)
-    annee_concours = models.DateField(null=False, blank=False)
+    annee_concours = models.IntegerField(null=False, blank=False)
 
     class Meta:
         db_table = 'concours'

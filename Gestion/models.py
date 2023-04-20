@@ -44,7 +44,7 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
 
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(auto_now=True)
-    otp = models.CharField(max_length=50)
+    otp = models.CharField(blank=False, null=True, max_length=50)
 
     is_active = models.BooleanField(default=True)
     is_superuser = models.BooleanField(default=False)
