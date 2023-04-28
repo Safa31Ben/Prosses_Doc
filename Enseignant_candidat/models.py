@@ -154,9 +154,9 @@ class Rapport_du_saisi(models.Model):
     id_rapport = models.AutoField(primary_key=True)
     id_enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, blank=False,
                                          null=False, db_column='id_enseignant', to_field='id_enseignant')
+    id_sujet = models.ForeignKey(Sujet, on_delete=models.CASCADE, blank=False,
+                                         null=False, db_column='id_sujet', to_field='id_sujet')
     titre = models.CharField(max_length=200, null=False, blank=False)
-    module = models.CharField(max_length=100, null=False, blank=False)
-    departement = models.CharField(max_length=100, null=False, blank=False)
     date = models.DateTimeField(auto_now=True, null=False, blank=False)
     contenu = models.CharField(max_length=1000, null=False, blank=False)
 

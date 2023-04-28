@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view
 from .serializers import *
 from rest_framework.response import Response
 from .models import *
-from Enseignant_candidat.models import Reclamation
+from Enseignant_candidat.models import Reclamation, Rapport_du_saisi
 from Gestion.models import Utilisateur
 
 from django.contrib.auth.decorators import *
@@ -65,3 +65,20 @@ def partagerAnnonces(request):
             return Response(serializer.data)
         else:
             return Response(serializer.errors)
+        
+@api_view(['GET'])
+def getRapportsDeSaisir(request):
+    if request.method == 'GET':
+        rapport_du_saisi = Rapport_du_saisi.objects.extra(
+            select={
+                'enseignant_nom': "select nom from utilisateur where utilisateur.id=id_enseignant",
+                'enseignant_prenom': "select prenom from utilisateur where utilisateur.id=id_enseignant",
+                'sujet_type': "select type from sujet where sujet.id_sujet=id_sujet",
+                'sujet_description': "select description from sujet where sujet.id_sujet=id_sujet",
+                },
+        ).values("enseignant_nom", "enseignant_prenom", "sujet_type", "sujet_description",
+                "id_rapport", "titre", "date", "contenu")
+        if rapport_du_saisi:
+            return Response(rapport_du_saisi)
+        else:
+            return Response({'rapports': 'pas de rapport du saisi'})
