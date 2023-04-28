@@ -13,7 +13,7 @@ def validate_decimals(value):
         return round(float(value), 2)
     except:
         raise ValidationError(_(f'(value) is not an integer or a float number'),)
-        
+
 class Candidat(models.Model):
     id_candidat = models.OneToOneField(Utilisateur, on_delete=models.CASCADE, blank=False,
                                        null=False, db_column='id_candidat', to_field='id', primary_key=True)

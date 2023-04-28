@@ -7,5 +7,7 @@ urlpatterns = [
     path('consulterRessourcesHumains/', views.getRessourcesHumains, name="consulterRessourcesHumains"),
     path('partagerAnnonces/', views.partagerAnnonces, name="partagerAnnonces"),
     path('getRapportsDeSaisir/', views.getRapportsDeSaisir, name="getRapportsDeSaisir"),
+    path('getEnseignantsEtSujet/<str:id>', views.getEnseignantsEtSujet, name="getEnseignantsEtSujet"),
+    path('setEnseignantsEtSujet/', views.setEnseignantsEtSujet, name="setEnseignantsEtSujet"),
 
 ]

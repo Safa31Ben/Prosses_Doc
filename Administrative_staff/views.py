@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view
 from .serializers import *
 from rest_framework.response import Response
 from .models import *
-from Enseignant_candidat.models import Reclamation, Rapport_du_saisi
+from Enseignant_candidat.models import Reclamation, Rapport_du_saisi, Enseignant
 from Gestion.models import Utilisateur
 
 from django.contrib.auth.decorators import *
@@ -18,7 +18,7 @@ def getReclamations(request):
             serialiers = ReclamationSerializers(reclamations, many=True)
             return Response(serialiers.data)
         else:
-            return Response({'reclamations': 'No reclamations'})
+            return Response({'reclamations' : 'No reclamations'})
         
 @api_view(['GET'])
 def getRessourcesHumains(request):
@@ -30,7 +30,6 @@ def getRessourcesHumains(request):
                 'note_sujet1': "select note_sujet1 from candidat where utilisateur.id=id_candidat",
                 'note_sujet2': "select note_sujet2 from candidat where utilisateur.id=id_candidat",
                 'moyenne': "select moyenne from candidat where utilisateur.id=id_candidat",
-
                 'concours': "select annee_concours from candidat, concours where candidat.id_concours=concours.id_concours",
                 },
         ).filter(type = 'candidat'
@@ -48,13 +47,13 @@ def getRessourcesHumains(request):
                 "type", "email", "nom", "prenom", "date_naissance", "profile_pic")
         
         if candidats and enseignants:
-            return Response({"enseignants":enseignants, "candidats":candidats})
+            return Response({"enseignants" : enseignants, "candidats" : candidats})
         elif candidats:
-            return Response({"candidats":candidats})
+            return Response({"candidats" : candidats})
         elif enseignants:
-            return Response({"enseignants":enseignants})
+            return Response({"enseignants" : enseignants})
         else:
-            return Response({'RessourcesHumains': 'No enseignants, No candidats'})
+            return Response({'RessourcesHumains' : 'No enseignants, No candidats'})
 
 @api_view(['POST'])
 def partagerAnnonces(request):
@@ -81,4 +80,41 @@ def getRapportsDeSaisir(request):
         if rapport_du_saisi:
             return Response(rapport_du_saisi)
         else:
-            return Response({'rapports': 'pas de rapport du saisi'})
+            return Response({'rapports' : 'pas de rapport du saisi'})
+        
+@api_view(['GET'])
+def getEnseignantsEtSujet(request, id):
+    if request.method == 'GET':
+        concours = Concours.objects.all().order_by('-annee_concours').first().id_concours
+        sujets = Sujet.objects.filter(id_concours=concours).values("id_sujet", "description", "type")
+        fac = Enseignant.objects.get(id_enseignant=id).faculte
+        enseignants = Enseignant.objects.extra(
+            select={
+                'nom': "select nom from utilisateur where utilisateur.id=id_enseignant",
+                'prenom': "select prenom from utilisateur where utilisateur.id=id_enseignant",
+            },
+        ).filter(faculte = fac
+        ).values("id_enseignant", "nom", "prenom", "grade", "depertement", "specialite")
+
+        if sujets:
+            return Response({"enseignants" : enseignants, "sujets" : sujets })
+        else:
+            return Response({'sujets' : 'Les sujets de cette concours pas encore ajouté'})
+
+@api_view(['PUT'])
+def setEnseignantsEtSujet(request):
+    if request.method == 'PUT':
+        enseignant_sujet = request.data
+        enseignant_update_list = []
+
+        for key, value in enseignant_sujet.items():
+            enseignant = Enseignant.objects.get(id_enseignant=key)
+            if value != None :
+                enseignant.id_sujet = Sujet.objects.get(id_sujet=value)
+            else : 
+                enseignant.id_sujet = None
+            enseignant_update_list.append(enseignant)
+        
+        Enseignant.objects.bulk_update(enseignant_update_list, ['id_sujet'])
+
+    return Response({'state' : 'Les sujet de concours sont affecté'})
