@@ -27,16 +27,25 @@ def getRessourcesHumains(request):
             select={
                 'universite': "select universite from candidat where utilisateur.id=id_candidat",
                 'specailite': "select specailite from candidat where utilisateur.id=id_candidat",
+                'note_sujet1': "select note_sujet1 from candidat where utilisateur.id=id_candidat",
+                'note_sujet2': "select note_sujet2 from candidat where utilisateur.id=id_candidat",
                 'moyenne': "select moyenne from candidat where utilisateur.id=id_candidat",
 
                 'concours': "select annee_concours from candidat, concours where candidat.id_concours=concours.id_concours",
                 },
-        ).filter(type = 'candidat').values("universite", "specailite", "moyenne", "concours", "type", "email", "nom", "prenom", "date_naissance", "profile_pic")
+        ).filter(type = 'candidat'
+        ).values("universite", "specailite", "note_sujet1", "note_sujet2", "moyenne", "concours",
+                "type", "email", "nom", "prenom", "date_naissance", "profile_pic")
         enseignants = Utilisateur.objects.extra(
             select={
                 'grade': "select grade from enseignant where utilisateur.id=id_enseignant",
+                'faculte': "select faculte from enseignant where utilisateur.id=id_enseignant",
+                'depertement': "select depertement from enseignant where utilisateur.id=id_enseignant",
+                'specialite': "select specialite from enseignant where utilisateur.id=id_enseignant",
                 },
-        ).filter(type = 'enseignant').values("grade","type", "email", "nom", "prenom", "date_naissance", "profile_pic")
+        ).filter(type = 'enseignant'
+        ).values("grade", "faculte", "depertement" , "specialite",
+                "type", "email", "nom", "prenom", "date_naissance", "profile_pic")
         
         if candidats and enseignants:
             return Response({"enseignants":enseignants, "candidats":candidats})
