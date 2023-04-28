@@ -86,7 +86,7 @@ DATABASES = {
         'HOST': '127.0.0.1',
         'PORT': 3306,
         'USER': 'root',
-        'PASSWORD': 'Sa31052001Fa',
+        'PASSWORD': 'password',
     }
 }
 
@@ -127,9 +127,9 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# for images
-MEDIA_URL = 'images/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'images')
+# for images and Annonces
+MEDIA_URL = 'Documents/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'Documents')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
