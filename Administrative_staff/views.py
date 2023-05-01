@@ -1,10 +1,12 @@
+import random
+
 from django.shortcuts import render
 
 from rest_framework.decorators import api_view
 from .serializers import *
 from rest_framework.response import Response
 from .models import *
-from Enseignant_candidat.models import Reclamation, Rapport_du_saisi, Enseignant
+from Enseignant_candidat.models import *
 from Gestion.models import Utilisateur
 
 from django.contrib.auth.decorators import *
@@ -69,7 +71,7 @@ def partagerAnnonces(request):
 def getRapportsDeSaisir(request):
     if request.method == 'GET':
         rapport_du_saisi = Rapport_du_saisi.objects.extra(
-            select={
+            select = {
                 'enseignant_nom': "select nom from utilisateur where utilisateur.id=id_enseignant",
                 'enseignant_prenom': "select prenom from utilisateur where utilisateur.id=id_enseignant",
                 'sujet_type': "select type from sujet where sujet.id_sujet=id_sujet",
@@ -108,9 +110,9 @@ def setEnseignantsEtSujet(request):
         enseignant_update_list = []
 
         for key, value in enseignant_sujet.items():
-            enseignant = Enseignant.objects.get(id_enseignant=key)
+            enseignant = Enseignant.objects.get(id_enseignant = key)
             if value != None :
-                enseignant.id_sujet = Sujet.objects.get(id_sujet=value)
+                enseignant.id_sujet = Sujet.objects.get(id_sujet = value)
             else : 
                 enseignant.id_sujet = None
             enseignant_update_list.append(enseignant)
@@ -118,3 +120,23 @@ def setEnseignantsEtSujet(request):
         Enseignant.objects.bulk_update(enseignant_update_list, ['id_sujet'])
 
     return Response({'state' : 'Les sujet de concours sont affecté'})
+
+@api_view(['GET'])
+def generCodesAnonyme(request):
+    if request.method == 'GET':
+        concours = Concours.objects.all().order_by('-annee_concours').first().id_concours
+        candidats = Candidat.objects.all().filter(id_concours = concours).values("id_candidat")
+        for candidat in candidats :
+            candidat = candidat.get("id_candidat")
+            presence = Presence.objects.get(id_candidat = candidat).etat_presence
+            if presence :
+                not_unique = True
+                while not_unique:
+                    unique_ref = random.randint(1000000000, 9999999999)
+                    if not Candidat.objects.filter(code_anonyme = unique_ref):
+                        not_unique = False
+                c = Candidat.objects.get(id_candidat = candidat)
+                if c.code_anonyme == None :
+                    c.code_anonyme = unique_ref
+                    c.save()
+    return Response({'Codes Anonyme' : 'Les codes anonyme a été généré pour les candidat présent'})

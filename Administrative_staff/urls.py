@@ -9,5 +9,6 @@ urlpatterns = [
     path('getRapportsDeSaisir/', views.getRapportsDeSaisir, name="getRapportsDeSaisir"),
     path('getEnseignantsEtSujet/<str:id>', views.getEnseignantsEtSujet, name="getEnseignantsEtSujet"),
     path('setEnseignantsEtSujet/', views.setEnseignantsEtSujet, name="setEnseignantsEtSujet"),
+    path('generCodesAnonyme/', views.generCodesAnonyme, name="generCodesAnonyme"),
 
 ]
