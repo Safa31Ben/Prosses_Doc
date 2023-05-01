@@ -38,8 +38,9 @@ class Enseignant(models.Model):
     depertement = models.CharField(max_length=100, blank=False, null=False)
     specialite = models.CharField(max_length=100, blank=False, null=False)
     id_sujet = models.ForeignKey(Sujet , on_delete=models.CASCADE, blank=False,
-                                       null=True, db_column='id_sujet', to_field='id_sujet')
-    
+                                    null=True, db_column='id_sujet', to_field='id_sujet')
+    nb_copie = models.PositiveIntegerField(default = 0, blank=False, null=False)
+
     class Meta:
         db_table = 'enseignant'
 
@@ -70,7 +71,7 @@ class Correction(models.Model):
     id_enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, blank=False,
                                          null=False, db_column='id_enseignant', to_field='id_enseignant')
     code_anonyme_candidat = models.ForeignKey(Candidat, on_delete=models.CASCADE, blank=False,
-                                                 null=False, db_column='code_anonyme_candidat', to_field='code_anonyme')
+                                                 null=True, db_column='code_anonyme_candidat', to_field='code_anonyme')
     note = models.FloatField(default=0.00, validators=[validate_decimals], null=False, blank=False)
     NB_CORRECTION = [
         (1, '1er'),
@@ -78,6 +79,13 @@ class Correction(models.Model):
         (3, '3éme'),
     ]
     numero_de_correction = models.IntegerField(choices=NB_CORRECTION, null=False, blank=False)
+    ETAT = [
+        ("pas encore corrige", "Pas encore corrigé"),
+        ("en cours de correction", "En cours de correction"),
+        ("pas valide", "Pas validé"),
+        ("valide", "Validé"),
+    ]
+    etat = models.CharField(max_length=25,choices=ETAT, null=False, blank=False , default="pas encore corrige")
 
     class Meta:
         unique_together = (('id_enseignant', 'code_anonyme_candidat'),)
@@ -85,9 +93,9 @@ class Correction(models.Model):
 
 class Presence(models.Model):
     id_enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, blank=False,
-                                         null=False, db_column='id_enseignant', to_field='id_enseignant')
+                                        null=False, db_column='id_enseignant', to_field='id_enseignant')
     id_candidat = models.OneToOneField(Candidat, on_delete=models.CASCADE, blank=False,
-                                       null=False, db_column='id_candidat', to_field='id_candidat')
+                                        null=False, db_column='id_candidat', to_field='id_candidat')
     etat_presence = models.BooleanField(default=False, null=False, blank=False)
     date = models.DateTimeField(auto_now=True, null=False, blank=False)
 
@@ -146,6 +154,10 @@ class Emplacement(models.Model):
     universite = models.CharField(max_length=200, null=False, blank=False)
     faculte = models.CharField(max_length=200, null=False, blank=False)
     salle = models.CharField(max_length=100, null=False, blank=False)
+    id_enseignant_principal = models.ForeignKey(Enseignant, on_delete=models.CASCADE, blank=False,
+                                        null=False, db_column='id_enseignant_principal', to_field='id_enseignant', related_name='enseignant_principal')
+    id_enseignant_secondaire = models.ForeignKey(Enseignant, on_delete=models.CASCADE, blank=False,
+                                        null=False, db_column='id_enseignant_secondaire', to_field='id_enseignant', related_name='enseignant_secondaire')
 
     class Meta:
         db_table = 'emplacement'
