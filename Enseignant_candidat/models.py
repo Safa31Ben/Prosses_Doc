@@ -19,6 +19,7 @@ class Candidat(models.Model):
                                        null=False, db_column='id_candidat', to_field='id', primary_key=True)
     universite = models.CharField(max_length=200, blank=False, null=False)
     code_anonyme = models.CharField(db_index=True, max_length=10, unique=True, blank=False, null=True)
+    faculte = models.CharField(max_length=100, blank=False, null=False)
     specailite = models.CharField(db_index=True, max_length=25, blank=False, null=False)
     id_concours = models.ForeignKey(Concours, on_delete=models.CASCADE, blank=False,
                                        null=False, db_column='id_concours', to_field='id_concours')

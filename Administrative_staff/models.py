@@ -2,7 +2,6 @@ from django.db import models
 
 class Concours(models.Model):
     id_concours = models.AutoField(primary_key=True)
-    salle = models.CharField(max_length=50, null=False, blank=False)
     date = models.DateField(null=False, blank=False)
     annee_concours = models.IntegerField(null=False, blank=False)
 

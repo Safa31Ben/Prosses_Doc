@@ -1,6 +1,7 @@
 import random
 
 from django.shortcuts import render
+from django.db.models import Count
 
 from rest_framework.decorators import api_view
 from .serializers import *
@@ -97,29 +98,50 @@ def getEnseignantsEtSujet(request, id):
             },
         ).filter(faculte = fac
         ).values("id_enseignant", "nom", "prenom", "grade", "depertement", "specialite")
-
+        nb_total_copie = Candidat.objects.filter(id_concours = concours
+                                                ).filter(faculte = fac
+                                                ).filter(code_anonyme__isnull = False).count()
         if sujets:
-            return Response({"enseignants" : enseignants, "sujets" : sujets })
+            return Response({"enseignants" : enseignants, "sujets" : sujets ,
+                            "nb total copie" : nb_total_copie })
         else:
             return Response({'sujets' : 'Les sujets de cette concours pas encore ajouté'})
 
 @api_view(['PUT'])
-def setEnseignantsEtSujet(request):
+def setEnseignantsEtSujet(request, id):
     if request.method == 'PUT':
-        enseignant_sujet = request.data
-        enseignant_update_list = []
-
-        for key, value in enseignant_sujet.items():
+        enseignants = request.data
+        concours = Concours.objects.all().order_by('-annee_concours').first().id_concours
+        fac = Enseignant.objects.get(id_enseignant=id).faculte
+        candidats = Candidat.objects.filter(id_concours = concours
+                                            ).filter(faculte = fac
+                                            ).filter(code_anonyme__isnull = False).values("code_anonyme")
+        for key, value in enseignants.items():
             enseignant = Enseignant.objects.get(id_enseignant = key)
-            if value != None :
-                enseignant.id_sujet = Sujet.objects.get(id_sujet = value)
+            if value.get("sujet") != None :
+                enseignant.id_sujet = Sujet.objects.get(id_sujet = value.get("sujet"))
             else : 
                 enseignant.id_sujet = None
-            enseignant_update_list.append(enseignant)
-        
-        Enseignant.objects.bulk_update(enseignant_update_list, ['id_sujet'])
+            if value.get("nb_copie") != None :
+                enseignant.nb_copie = value.get("nb_copie")
+            else : 
+                enseignant.nb_copie = 0
+            enseignant.save()
 
-    return Response({'state' : 'Les sujet de concours sont affecté'})
+            candidats_have_corrector = Correction.objects.extra(
+                        select={
+                            'sujet': f"SELECT id_sujet FROM enseignant where id_enseignant = {key}",
+                        },
+                    ).filter(numero_de_correction = value.get("nb_corr")
+                    ).filter(id_enseignant = key
+                    ).values("code_anonyme_candidat")
+            candidats_havent_corrector = list(candidats.exclude( code_anonyme__in = candidats_have_corrector).values("code_anonyme"))[0 : value.get("nb_copie")]
+            for candidat in candidats_havent_corrector :
+                id_candidat = Candidat.objects.get(code_anonyme = candidat.get("code_anonyme"))
+                Correction(id_enseignant = enseignant,
+                                code_anonyme_candidat = id_candidat,
+                                numero_de_correction = value.get("nb_corr")).save()
+    return Response({'Etat' : "L'affectation est effectué avec succès"})
 
 @api_view(['GET'])
 def generCodesAnonyme(request):

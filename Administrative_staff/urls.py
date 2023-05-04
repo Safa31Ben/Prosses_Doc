@@ -8,7 +8,7 @@ urlpatterns = [
     path('partagerAnnonces/', views.partagerAnnonces, name="partagerAnnonces"),
     path('getRapportsDeSaisir/', views.getRapportsDeSaisir, name="getRapportsDeSaisir"),
     path('getEnseignantsEtSujet/<str:id>', views.getEnseignantsEtSujet, name="getEnseignantsEtSujet"),
-    path('setEnseignantsEtSujet/', views.setEnseignantsEtSujet, name="setEnseignantsEtSujet"),
+    path('setEnseignantsEtSujet/<str:id>', views.setEnseignantsEtSujet, name="setEnseignantsEtSujet"),
     path('generCodesAnonyme/', views.generCodesAnonyme, name="generCodesAnonyme"),
 
 ]
