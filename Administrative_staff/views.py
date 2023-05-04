@@ -128,11 +128,7 @@ def setEnseignantsEtSujet(request, id):
                 enseignant.nb_copie = 0
             enseignant.save()
 
-            candidats_have_corrector = Correction.objects.extra(
-                        select={
-                            'sujet': f"SELECT id_sujet FROM enseignant where id_enseignant = {key}",
-                        },
-                    ).filter(numero_de_correction = value.get("nb_corr")
+            candidats_have_corrector = Correction.objects.all().filter(numero_de_correction = value.get("nb_corr")
                     ).filter(id_enseignant = key
                     ).values("code_anonyme_candidat")
             candidats_havent_corrector = list(candidats.exclude( code_anonyme__in = candidats_have_corrector).values("code_anonyme"))[0 : value.get("nb_copie")]
@@ -162,3 +158,4 @@ def generCodesAnonyme(request):
                     c.code_anonyme = unique_ref
                     c.save()
     return Response({'Codes Anonyme' : 'Les codes anonyme a été généré pour les candidat présent'})
+
