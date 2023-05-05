@@ -158,9 +158,9 @@ class Emplacement(models.Model):
     salle = models.CharField(max_length=100, null=False, blank=False)
     capacite = models.PositiveIntegerField(default=0, null=False, blank=False)
     id_enseignant_principal = models.ForeignKey(Enseignant, on_delete=models.CASCADE, blank=False,
-                                        null=False, db_column='id_enseignant_principal', to_field='id_enseignant', related_name='enseignant_principal')
+                                        null=True, db_column='id_enseignant_principal', to_field='id_enseignant', related_name='enseignant_principal')
     id_enseignant_secondaire = models.ForeignKey(Enseignant, on_delete=models.CASCADE, blank=False,
-                                        null=False, db_column='id_enseignant_secondaire', to_field='id_enseignant', related_name='enseignant_secondaire')
+                                        null=True, db_column='id_enseignant_secondaire', to_field='id_enseignant', related_name='enseignant_secondaire')
 
     class Meta:
         db_table = 'emplacement'
