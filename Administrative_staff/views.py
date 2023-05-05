@@ -98,9 +98,9 @@ def getEnseignantsEtSujet(request, id):
             },
         ).filter(faculte = fac
         ).values("id_enseignant", "nom", "prenom", "grade", "depertement", "specialite")
-        nb_total_copie = Candidat.objects.filter(id_concours = concours
-                                                ).filter(faculte = fac
-                                                ).filter(code_anonyme__isnull = False).count()
+        nb_total_copie = Candidat.objects.filter(id_concours = concours ,
+                                                faculte = fac ,
+                                                code_anonyme__isnull = False).count()
         if sujets:
             return Response({"enseignants" : enseignants, "sujets" : sujets ,
                             "nb total copie" : nb_total_copie })
@@ -113,9 +113,9 @@ def setEnseignantsEtSujet(request, id):
         enseignants = request.data
         concours = Concours.objects.all().order_by('-annee_concours').first().id_concours
         fac = Enseignant.objects.get(id_enseignant=id).faculte
-        candidats = Candidat.objects.filter(id_concours = concours
-                                            ).filter(faculte = fac
-                                            ).filter(code_anonyme__isnull = False).values("code_anonyme")
+        candidats = Candidat.objects.filter(id_concours = concours ,
+                                            faculte = fac ,
+                                            code_anonyme__isnull = False).values("code_anonyme")
         for key, value in enseignants.items():
             enseignant = Enseignant.objects.get(id_enseignant = key)
             if value.get("sujet") != None :
@@ -128,8 +128,8 @@ def setEnseignantsEtSujet(request, id):
                 enseignant.nb_copie = 0
             enseignant.save()
 
-            candidats_have_corrector = Correction.objects.all().filter(numero_de_correction = value.get("nb_corr")
-                    ).filter(id_enseignant = key
+            candidats_have_corrector = Correction.objects.all().filter(numero_de_correction = value.get("nb_corr") ,
+                    id_enseignant = key
                     ).values("code_anonyme_candidat")
             candidats_havent_corrector = list(candidats.exclude( code_anonyme__in = candidats_have_corrector).values("code_anonyme"))[0 : value.get("nb_copie")]
             for candidat in candidats_havent_corrector :
@@ -159,3 +159,86 @@ def generCodesAnonyme(request):
                     c.save()
     return Response({'Codes Anonyme' : 'Les codes anonyme a été généré pour les candidat présent'})
 
+
+@api_view(['GET'])
+def validerNotes(request, id):
+    if request.method == 'GET':
+        concours = Concours.objects.all().order_by('-annee_concours').first().id_concours
+        fac = Enseignant.objects.get(id_enseignant=id).faculte
+        candidats = Correction.objects.extra(
+                        select={
+                            'id_concours': f"select id_concours from candidat where candidat.code_anonyme=code_anonyme_candidat and id_concours = {concours} and faculte = {fac}",
+                            'faculte': f"select faculte from candidat where candidat.code_anonyme=code_anonyme_candidat and id_concours = {concours} and faculte = {fac}",
+                            },
+                        ).values("code_anonyme_candidat").distinct()
+        sujets = {}
+        for candidat in candidats :
+            note1 = Correction.objects.filter(code_anonyme_candidat = candidat.get("code_anonyme_candidat") , numero_de_correction = 1).values().first()
+            note2 = Correction.objects.filter(code_anonyme_candidat = candidat.get("code_anonyme_candidat") , numero_de_correction = 2).values().first()
+            if abs(note1.get("note") - note2.get("note")) < 3 :
+                n1 = Correction.objects.get(id=note1.get('id'))
+                n1.etat = "valide"
+                n1.save()
+                n2 = Correction.objects.get(id=note2.get('id'))
+                n2.etat = "valide"
+                n2.save()
+                c = Candidat.objects.get(code_anonyme = candidat.get("code_anonyme_candidat"))
+                c.note_sujet1 = sum([n1.note,n2.note])/2
+                c.save()
+            else :
+                sujet = Enseignant.objects.get(id_enseignant = note1.get('id_enseignant_id')).id_sujet.id_sujet
+                sujet = Sujet.objects.filter(id_sujet = sujet).values().first()
+                if sujet.get('id_sujet') not in sujets :
+                    enseignants = Enseignant.objects.extra(
+                            select={
+                                'nom': "select nom from utilisateur where utilisateur.id=id_enseignant",
+                                'prenom': "select prenom from utilisateur where utilisateur.id=id_enseignant",
+                            },
+                        ).filter(faculte = fac , id_sujet = None).values("id_enseignant", "nom", "prenom", "grade", "depertement", "specialite")
+                    
+                    sujets[ sujet.get('id_sujet')] = {
+                                    'description': sujet.get('description'),
+                                    'type': sujet.get('type'),
+                                    'candidats' : [candidat.get("code_anonyme_candidat")],
+                                    'enseignants' : enseignants
+                                    }
+                else :
+                    (sujets.get(sujet.get('id_sujet')))['candidats'].append(candidat.get("code_anonyme_candidat"))
+            
+            note1 = Correction.objects.all().filter(code_anonyme_candidat = candidat.get("code_anonyme_candidat") , numero_de_correction = 1).values()[1]
+            note2 = Correction.objects.all().filter(code_anonyme_candidat = candidat.get("code_anonyme_candidat") , numero_de_correction = 2).values()[1]
+            if abs(note1.get("note") - note2.get("note")) < 3 :
+                n1 = Correction.objects.get(id=note1.get('id'))
+                n1.etat = "valide"
+                n1.save()
+                n2 = Correction.objects.get(id=note2.get('id'))
+                n2.etat = "valide"
+                n2.save()
+                c = Candidat.objects.get(code_anonyme = candidat.get("code_anonyme_candidat"))
+                c.note_sujet2 = sum([n1.note,n2.note])/2
+                c.save()
+            else :
+                sujet = Enseignant.objects.get(id_enseignant = note1.get('id_enseignant_id')).id_sujet.id_sujet
+                sujet = Sujet.objects.filter(id_sujet = sujet).values().first()
+                if sujet.get('id_sujet') not in sujets :
+                    enseignants = Enseignant.objects.extra(
+                            select={
+                                'nom': "select nom from utilisateur where utilisateur.id=id_enseignant",
+                                'prenom': "select prenom from utilisateur where utilisateur.id=id_enseignant",
+                            },
+                        ).filter(faculte = fac , 
+                        id_sujet = None).values("id_enseignant", "nom", "prenom", "grade", "depertement", "specialite")
+                    
+                    sujets[ sujet.get('id_sujet')] = {
+                                    'description': sujet.get('description'),
+                                    'type': sujet.get('type'),
+                                    'candidats' : [candidat.get("code_anonyme_candidat")],
+                                    'enseignants' : enseignants
+                                    }
+                else :
+                    (sujets.get(sujet.get('id_sujet')))['candidats'].append(candidat.get("code_anonyme_candidat"))
+        
+        if sujets :
+            return Response ({ "candidat sujet" : sujets})
+        else :
+            return Response ({ "Etat" : "la validation des notes est effectuée"})
