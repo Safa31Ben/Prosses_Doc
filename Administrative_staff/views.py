@@ -1,8 +1,5 @@
 import random
 
-from django.shortcuts import render
-from django.db.models import Count
-
 from rest_framework.decorators import api_view
 from .serializers import *
 from rest_framework.response import Response
@@ -11,7 +8,6 @@ from Enseignant_candidat.models import *
 from Gestion.models import Utilisateur
 
 from django.contrib.auth.decorators import *
-from rest_framework import status
 
 @api_view(['GET'])
 def getReclamations(request):
@@ -22,7 +18,7 @@ def getReclamations(request):
             return Response(serialiers.data)
         else:
             return Response({'reclamations' : 'No reclamations'})
-        
+
 @api_view(['GET'])
 def getRessourcesHumains(request):
     if request.method == 'GET':
@@ -67,7 +63,7 @@ def partagerAnnonces(request):
             return Response(serializer.data)
         else:
             return Response(serializer.errors)
-        
+
 @api_view(['GET'])
 def getRapportsDeSaisir(request):
     if request.method == 'GET':
@@ -84,7 +80,7 @@ def getRapportsDeSaisir(request):
             return Response(rapport_du_saisi)
         else:
             return Response({'rapports' : 'pas de rapport du saisi'})
-        
+
 @api_view(['GET'])
 def getEnseignantsEtSujet(request, id):
     if request.method == 'GET':
@@ -102,7 +98,7 @@ def getEnseignantsEtSujet(request, id):
                                                 faculte = fac ,
                                                 code_anonyme__isnull = False).count()
         if sujets:
-            return Response({"enseignants" : enseignants, "sujets" : sujets ,
+            return Response({"enseignants" : enseignants, "sujets" : sujets,
                             "nb total copie" : nb_total_copie })
         else:
             return Response({'sujets' : 'Les sujets de cette concours pas encore ajouté'})
@@ -128,10 +124,11 @@ def setEnseignantsEtSujet(request, id):
                 enseignant.nb_copie = 0
             enseignant.save()
 
-            candidats_have_corrector = Correction.objects.all().filter(numero_de_correction = value.get("nb_corr") ,
-                    id_enseignant = key
-                    ).values("code_anonyme_candidat")
-            candidats_havent_corrector = list(candidats.exclude( code_anonyme__in = candidats_have_corrector).values("code_anonyme"))[0 : value.get("nb_copie")]
+            candidats_have_corrector = Correction.objects.all().filter(numero_de_correction = value.get("nb_corr"),
+                                                                    id_enseignant = key
+                                                                    ).values("code_anonyme_candidat")
+            candidats_havent_corrector = list(candidats.exclude( code_anonyme__in = candidats_have_corrector
+                                                                ).values("code_anonyme"))[0 : value.get("nb_copie")]
             for candidat in candidats_havent_corrector :
                 id_candidat = Candidat.objects.get(code_anonyme = candidat.get("code_anonyme"))
                 Correction(id_enseignant = enseignant,
@@ -159,7 +156,6 @@ def generCodesAnonyme(request):
                     c.save()
     return Response({'Codes Anonyme' : 'Les codes anonyme a été généré pour les candidat présent'})
 
-
 @api_view(['GET'])
 def validerNotes(request, id):
     if request.method == 'GET':
@@ -173,8 +169,10 @@ def validerNotes(request, id):
                         ).values("code_anonyme_candidat").distinct()
         sujets = {}
         for candidat in candidats :
-            note1 = Correction.objects.filter(code_anonyme_candidat = candidat.get("code_anonyme_candidat") , numero_de_correction = 1).values().first()
-            note2 = Correction.objects.filter(code_anonyme_candidat = candidat.get("code_anonyme_candidat") , numero_de_correction = 2).values().first()
+            note1 = Correction.objects.filter(code_anonyme_candidat = candidat.get("code_anonyme_candidat") , numero_de_correction = 1
+                                            ).values().first()
+            note2 = Correction.objects.filter(code_anonyme_candidat = candidat.get("code_anonyme_candidat") , numero_de_correction = 2
+                                            ).values().first()
             if abs(note1.get("note") - note2.get("note")) < 3 :
                 n1 = Correction.objects.get(id=note1.get('id'))
                 n1.etat = "valide"
@@ -205,8 +203,10 @@ def validerNotes(request, id):
                 else :
                     (sujets.get(sujet.get('id_sujet')))['candidats'].append(candidat.get("code_anonyme_candidat"))
             
-            note1 = Correction.objects.all().filter(code_anonyme_candidat = candidat.get("code_anonyme_candidat") , numero_de_correction = 1).values()[1]
-            note2 = Correction.objects.all().filter(code_anonyme_candidat = candidat.get("code_anonyme_candidat") , numero_de_correction = 2).values()[1]
+            note1 = Correction.objects.all().filter(code_anonyme_candidat = candidat.get("code_anonyme_candidat"),
+                                                    numero_de_correction = 1).values()[1]
+            note2 = Correction.objects.all().filter(code_anonyme_candidat = candidat.get("code_anonyme_candidat"),
+                                                    numero_de_correction = 2).values()[1]
             if abs(note1.get("note") - note2.get("note")) < 3 :
                 n1 = Correction.objects.get(id=note1.get('id'))
                 n1.etat = "valide"
@@ -260,3 +260,63 @@ def set3emeEnseignantsEtSujet(request):
                                 code_anonyme_candidat = candidat_code,
                                 numero_de_correction = 3).save()
         return Response({'Etat' : "L'affectation est effectué avec succès"})
+
+@api_view(['GET'])
+def validerNotesMoyenne(request, id):
+    if request.method == 'GET':
+        concours = Concours.objects.all().order_by('-annee_concours').first().id_concours
+        fac = Enseignant.objects.get(id_enseignant=id).faculte
+        candidats = Candidat.objects.filter(id_concours = concours,
+                                            faculte = fac,
+                                            code_anonyme__isnull = False).values()
+        for candidat in candidats : 
+            note1 = candidat.get("note_sujet1")
+            note2 = candidat.get("note_sujet2")
+            if note1 != 0 and note2 != 0 :
+                c = Candidat.objects.get(id_candidat = candidat.get('id_candidat_id'))
+                c.moyenne = sum([note1, note2])/2
+                c.save()
+            else :
+                id_enseignant = Correction.objects.filter(code_anonyme_candidat = candidat.get("code_anonyme"),
+                                                        numero_de_correction = 3).values("id_enseignant")
+                sujet = []
+                for ens in id_enseignant :
+                    sujet.append(Enseignant.objects.filter(id_enseignant = ens.get("id_enseignant")).values("id_sujet"))
+                for sujetQ in sujet :
+                    for s in sujetQ :
+                        enseignants = Enseignant.objects.filter(id_sujet = s.get("id_sujet")).values()
+                        notes = []
+                        for enseignant in enseignants :
+                            note = Correction.objects.filter(code_anonyme_candidat = candidat.get("code_anonyme"),
+                                                            id_enseignant = enseignant.get("id_enseignant_id")).values().first()
+                            if note :
+                                n = Correction.objects.get(id = note.get("id"))
+                                n.etat = "valide"
+                                n.save()
+                                notes.append(note.get("note"))
+                        notes.sort(reverse=True)
+                        notes = notes[0:2]
+                        if note1 == 0 and note2 != 0 :
+                            c = Candidat.objects.get(id_candidat = candidat.get('id_candidat_id'))
+                            c.note_sujet1 = sum(notes)/2
+                            note1 = sum(notes)/2
+                            c.moyenne = sum([note1, note2])/2
+                            c.save()
+                        elif note1 != 0 and note2 == 0 :
+                            c = Candidat.objects.get(id_candidat = candidat.get('id_candidat_id'))
+                            c.note_sujet2 = sum(notes)/2
+                            note2 = sum(notes)/2
+                            c.moyenne = sum([note1, note2])/2
+                            c.save()
+                        else :
+                            c = Candidat.objects.get(id_candidat = candidat.get('id_candidat_id'))
+                            if c.note_sujet1 == 0 and c.note_sujet2 == 0 :
+                                c.note_sujet1 = sum(notes)/2
+                                c.save()
+                            else :
+                                c.note_sujet2 = sum(notes)/2
+                                c.moyenne = sum([sum(notes)/2, c.note_sujet1])/2
+                                c.save()
+
+        return Response ({ "Etat" : "La validation des notes et le calcul de moyennes est effectuée"})
+
