@@ -11,5 +11,6 @@ urlpatterns = [
     path('setEnseignantsEtSujet/<str:id>', views.setEnseignantsEtSujet, name="setEnseignantsEtSujet"),
     path('generCodesAnonyme/', views.generCodesAnonyme, name="generCodesAnonyme"),
     path('validerNotes/<str:id>', views.validerNotes, name="validerNotes"),
+    path('set3emeEnseignantsEtSujet/', views.set3emeEnseignantsEtSujet, name="set3emeEnseignantsEtSujet"),
 
 ]

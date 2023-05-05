@@ -241,4 +241,22 @@ def validerNotes(request, id):
         if sujets :
             return Response ({ "candidat sujet" : sujets})
         else :
-            return Response ({ "Etat" : "la validation des notes est effectuée"})
+            return Response ({ "Etat" : "La validation des notes est effectuée"})
+
+@api_view(['PUT'])
+def set3emeEnseignantsEtSujet(request):
+    if request.method == 'PUT':
+        sujets = request.data
+        for key , value in sujets.items() :
+            sujet = Sujet.objects.get(id_sujet = key)
+
+            enseignant = Enseignant.objects.get(id_enseignant = value.get('enseignants'))
+            enseignant.id_sujet = sujet
+            enseignant.nb_copie = len(value.get('candidats'))
+            enseignant.save()
+            for candidat in value.get('candidats') : 
+                candidat_code = Candidat.objects.get(code_anonyme = candidat)
+                Correction(id_enseignant = enseignant,
+                                code_anonyme_candidat = candidat_code,
+                                numero_de_correction = 3).save()
+        return Response({'Etat' : "L'affectation est effectué avec succès"})
