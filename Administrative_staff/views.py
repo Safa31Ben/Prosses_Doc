@@ -370,3 +370,35 @@ def setEmplacementEnseignantsCandidats(request, id):
             
         return Response ({"emplacements" : "L'affectation des enseignants pour la surveillance et les emplacements des candidats été effectée"})
 
+@api_view(['GET'])
+def affecterSujetThese (request, id):
+    if request.method == 'GET':
+        concours = Concours.objects.all().order_by('-annee_concours').first().id_concours
+        fac = Enseignant.objects.get(id_enseignant=id).faculte
+        candidats = Candidat.objects.filter(id_concours = concours,
+                                            faculte = fac,
+                                            code_anonyme__isnull = False).order_by('-moyenne').values('id_candidat_id')
+        for candidat in candidats :
+            choises = Choix.objects.filter(id_candidat = candidat.get('id_candidat_id')).order_by('order').values()
+            for choix in choises :
+                given = Choix.objects.filter(etat = True , id_these = choix.get('id_these_id'))
+                if not given :
+                    ch = Choix.objects.get(id = choix.get('id'))
+                    ch.etat = True
+                    ch.save()
+                    break
+        theses = Choix.objects.filter(etat = True).values()
+        candidats = []
+        for these in theses :
+            can = Candidat.objects.filter(id_concours = concours, faculte = fac, id_candidat = these.get("id_candidat_id")).extra(
+                select={
+                    'nom': 'select nom from utilisateur where utilisateur.id=id_candidat',
+                    'prenom': 'select prenom from utilisateur where utilisateur.id=id_candidat',
+                    'sujet': f'select sujet from these where these.id_these={these.get("id_these_id")}',
+                    'description': f'select description from these where these.id_these={these.get("id_these_id")}',
+                },
+            ).values('nom', 'prenom', 'sujet', 'description', 'universite', 'faculte', 'specailite', 'moyenne')
+            if can :
+                candidats.append(can)
+        return Response ({"candidats" : candidats})
+

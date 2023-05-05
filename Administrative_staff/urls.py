@@ -15,5 +15,6 @@ urlpatterns = [
     path('validerNotesMoyenne/<str:id>', views.validerNotesMoyenne, name="validerNotesMoyenne"),
     path('disponibleEmplacementEnseignants/<str:id>', views.getDisponibleEmplacementEnseignants, name="getDisponibleEmplacementEnseignants"),
     path('emplacementEnseignantsCandidats/<str:id>', views.setEmplacementEnseignantsCandidats, name="setEmplacementEnseignantsCandidats"),
+    path('affecterSujetThese/<str:id>', views.affecterSujetThese, name="affecterSujetThese"),
 
 ]
