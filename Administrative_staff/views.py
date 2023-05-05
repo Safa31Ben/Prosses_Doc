@@ -320,3 +320,53 @@ def validerNotesMoyenne(request, id):
 
         return Response ({ "Etat" : "La validation des notes et le calcul de moyennes est effectuée"})
 
+@api_view(['GET'])
+def getDisponibleEmplacementEnseignants(request, id):
+    if request.method == 'GET':
+        concours = Concours.objects.all().order_by('-annee_concours').first().id_concours
+        enseignant = Enseignant.objects.get(id_enseignant = id)
+        emplacements = Emplacement.objects.filter(universite = enseignant.universite,
+                                                faculte = enseignant.faculte).values("id_emplacement" , "salle","capacite")
+        enseignants = Enseignant.objects.extra(
+                            select={
+                                'nom': "select nom from utilisateur where utilisateur.id=id_enseignant",
+                                'prenom': "select prenom from utilisateur where utilisateur.id=id_enseignant",
+                            },
+                        ).filter(universite = enseignant.universite,
+                                faculte = enseignant.faculte).values("id_enseignant", "nom", "prenom", "grade")
+        nb_candidats = Candidat.objects.filter(id_concours = concours,
+                                            faculte = enseignant.faculte).count()
+        emplacement = []
+        co = 0
+        for empl in emplacements:
+            if co < nb_candidats :
+                co += empl.get("capacite")
+                emplacement.append(empl)
+            else :
+                break
+        return Response ({ "emplacements" : emplacement,
+                        "enseignants" : enseignants})
+
+@api_view(['PUT'])
+def setEmplacementEnseignantsCandidats(request, id):
+    if request.method == 'PUT':
+        emplacements = request.data
+        concours = Concours.objects.all().order_by('-annee_concours').first().id_concours
+        enseignant = Enseignant.objects.get(id_enseignant = id)
+        for key , value in emplacements.items() : 
+            emplacement = Emplacement.objects.get(id_emplacement = key)
+            emplacement.id_enseignant_principal = Enseignant.objects.get(id_enseignant = value.get('id_enseignant_principal'))
+            emplacement.id_enseignant_secondaire = Enseignant.objects.get(id_enseignant = value.get('id_enseignant_secondaire'))
+            emplacement.save()
+
+            candidats_havent_emplacement = list(Candidat.objects.all(
+                                    ).filter(id_emplacement = None,
+                                    id_concours = concours,
+                                    faculte = enseignant.faculte).values('id_candidat_id'))[0 : emplacement.capacite]
+            for candidat in candidats_havent_emplacement : 
+                c = Candidat.objects.get(id_candidat = candidat.get('id_candidat_id'))
+                c.id_emplacement = emplacement
+                c.save()
+            
+        return Response ({"emplacements" : "L'affectation des enseignants pour la surveillance et les emplacements des candidats été effectée"})
+
