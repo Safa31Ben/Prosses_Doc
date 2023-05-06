@@ -1,5 +1,6 @@
 import random
 
+from django.db.models import Count
 from rest_framework.decorators import api_view
 from .serializers import *
 from rest_framework.response import Response
@@ -402,3 +403,49 @@ def affecterSujetThese (request, id):
                 candidats.append(can)
         return Response ({"candidats" : candidats})
 
+@api_view(['GET'])
+def consulterStats (request, id):
+    if request.method == 'GET':
+        fac = Enseignant.objects.get(id_enseignant=id).faculte
+
+        nb_candidats = Candidat.objects.all().filter(faculte = fac).extra(
+                select={
+                    'concours': "select annee_concours from concours where candidat.id_concours=concours.id_concours",
+                },
+            ).values('concours').annotate(nb_candidats=Count("id_concours")).order_by('-concours')
+        
+        presence_percentage = Candidat.objects.all().filter(faculte = fac).extra(
+                select={
+                    'concours': "select annee_concours from concours where candidat.id_concours=concours.id_concours",
+                    'etat_presence': "select etat_presence from presence where candidat.id_candidat=presence.id_candidat",
+                },
+            ).values('concours', "etat_presence").annotate(nb_presence=Count('id_concours_id'))
+        
+        high_moyenne = Candidat.objects.all().filter(faculte = fac).extra(
+                select={
+                    'concours': "select annee_concours from concours where candidat.id_concours=concours.id_concours",
+                },
+            ).values('moyenne', 'concours').order_by('-moyenne')
+        moyennes = {}
+        for hm in high_moyenne :
+            if hm.get('concours') not in moyennes :
+                moyennes[hm.get('concours')] = hm.get('moyenne')
+
+        nb_reclamation = Reclamation.objects.all().extra(
+            select = {
+                'concours': "select annee_concours from candidat, concours where candidat.id_candidat=reclamation.id_candidat and candidat.id_concours=concours.id_concours",
+            }
+        ).values("concours", "id_reclamation")
+
+        reclamations = {}
+        for recl in nb_reclamation :
+            if recl.get('concours') not in reclamations :
+                reclamations[recl.get('concours')] = 1
+            else :
+                reclamations[recl.get('concours')] += 1
+
+        return Response ({"nb candidats" : nb_candidats,
+                        "presence percentage" : presence_percentage,
+                        "high moyenne" : moyennes,
+                        "nb reclamation" : reclamations
+                        })

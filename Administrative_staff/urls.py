@@ -16,5 +16,6 @@ urlpatterns = [
     path('disponibleEmplacementEnseignants/<str:id>', views.getDisponibleEmplacementEnseignants, name="getDisponibleEmplacementEnseignants"),
     path('emplacementEnseignantsCandidats/<str:id>', views.setEmplacementEnseignantsCandidats, name="setEmplacementEnseignantsCandidats"),
     path('affecterSujetThese/<str:id>', views.affecterSujetThese, name="affecterSujetThese"),
+    path('consulterStats/<str:id>', views.consulterStats, name="consulterStats"),
 
 ]
