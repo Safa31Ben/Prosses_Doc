@@ -20,32 +20,43 @@ def getReclamations(request):
         else:
             return Response({'reclamations' : 'No reclamations'})
 
+@api_view(['PUT'])
+def repondreReclamations(request):
+    if request.method == 'PUT':
+        reclamation = Reclamation.objects.get(id_reclamation=request.data.get("id_reclamation"))
+        reclamation.Reponse = request.data.get("reponse")
+        reclamation.save()
+    return Response({'Etat' : "Effectué avec succès"})
+
 @api_view(['GET'])
 def getRessourcesHumains(request):
     if request.method == 'GET':
-        candidats = Utilisateur.objects.extra(
-            select={
-                'universite': "select universite from candidat where utilisateur.id=id_candidat",
-                'specailite': "select specailite from candidat where utilisateur.id=id_candidat",
-                'note_sujet1': "select note_sujet1 from candidat where utilisateur.id=id_candidat",
-                'note_sujet2': "select note_sujet2 from candidat where utilisateur.id=id_candidat",
-                'moyenne': "select moyenne from candidat where utilisateur.id=id_candidat",
-                'concours': "select annee_concours from candidat, concours where candidat.id_concours=concours.id_concours",
-                },
-        ).filter(type = 'candidat'
-        ).values("universite", "specailite", "note_sujet1", "note_sujet2", "moyenne", "concours",
-                "type", "email", "nom", "prenom", "date_naissance", "profile_pic")
-        enseignants = Utilisateur.objects.extra(
-            select={
-                'grade': "select grade from enseignant where utilisateur.id=id_enseignant",
-                'faculte': "select faculte from enseignant where utilisateur.id=id_enseignant",
-                'depertement': "select depertement from enseignant where utilisateur.id=id_enseignant",
-                'specialite': "select specialite from enseignant where utilisateur.id=id_enseignant",
-                },
-        ).filter(type = 'enseignant'
-        ).values("grade", "faculte", "depertement" , "specialite",
-                "type", "email", "nom", "prenom", "date_naissance", "profile_pic")
-        
+        candidats = Utilisateur.objects.filter(type='candidat').values(
+            "candidat__universite",
+            "candidat__specailite",
+            "candidat__note_sujet1",
+            "candidat__note_sujet2",
+            "candidat__moyenne",
+            "candidat__id_concours__annee_concours",
+            "type",
+            "email",
+            "nom",
+            "prenom",
+            "date_naissance",
+            "profile_pic"
+        )
+        enseignants = Utilisateur.objects.filter(type='enseignant').values(
+            "enseignant__grade",
+            "enseignant__faculte",
+            "enseignant__depertement",
+            "enseignant__specialite",
+            "type",
+            "email",
+            "nom",
+            "prenom",
+            "date_naissance",
+            "profile_pic"
+        )
         if candidats and enseignants:
             return Response({"enseignants" : enseignants, "candidats" : candidats})
         elif candidats:
@@ -72,15 +83,14 @@ def getRapportsDeSaisir(request):
             select = {
                 'enseignant_nom': "select nom from utilisateur where utilisateur.id=id_enseignant",
                 'enseignant_prenom': "select prenom from utilisateur where utilisateur.id=id_enseignant",
-                'sujet_type': "select type from sujet where sujet.id_sujet=id_sujet",
-                'sujet_description': "select description from sujet where sujet.id_sujet=id_sujet",
                 },
-        ).values("enseignant_nom", "enseignant_prenom", "sujet_type", "sujet_description",
+        ).values("enseignant_nom", "enseignant_prenom", "id_sujet__type", "id_sujet__description",
                 "id_rapport", "titre", "date", "contenu")
+        print(rapport_du_saisi)
         if rapport_du_saisi:
             return Response(rapport_du_saisi)
         else:
-            return Response({'rapports' : 'pas de rapport du saisi'})
+            return Response({'rapports' : 'Pas de rapport du saisi'})
 
 @api_view(['GET'])
 def getEnseignantsEtSujet(request, id):
@@ -155,7 +165,7 @@ def generCodesAnonyme(request):
                 if c.code_anonyme == None :
                     c.code_anonyme = unique_ref
                     c.save()
-    return Response({'Codes Anonyme' : 'Les codes anonyme a été généré pour les candidat présent'})
+    return Response({'CodesAnonyme' : 'Les codes anonyme a été généré pour les candidat présent'})
 
 @api_view(['GET'])
 def validerNotes(request, id):
@@ -240,7 +250,7 @@ def validerNotes(request, id):
                     (sujets.get(sujet.get('id_sujet')))['candidats'].append(candidat.get("code_anonyme_candidat"))
         
         if sujets :
-            return Response ({ "candidat sujet" : sujets})
+            return Response ({ "CandidatSujet" : sujets})
         else :
             return Response ({ "Etat" : "La validation des notes est effectuée"})
 
@@ -444,8 +454,8 @@ def consulterStats (request, id):
             else :
                 reclamations[recl.get('concours')] += 1
 
-        return Response ({"nb candidats" : nb_candidats,
-                        "presence percentage" : presence_percentage,
-                        "high moyenne" : moyennes,
-                        "nb reclamation" : reclamations
+        return Response ({"nbCandidats" : nb_candidats,
+                        "presencePercentage" : presence_percentage,
+                        "highMoyenne" : moyennes,
+                        "nbReclamation" : reclamations
                         })
