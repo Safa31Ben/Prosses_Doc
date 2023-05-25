@@ -20,14 +20,6 @@ def getReclamations(request):
         else:
             return Response({'reclamations' : 'No reclamations'})
 
-@api_view(['PUT'])
-def repondreReclamations(request):
-    if request.method == 'PUT':
-        reclamation = Reclamation.objects.get(id_reclamation=request.data.get("id_reclamation"))
-        reclamation.Reponse = request.data.get("reponse")
-        reclamation.save()
-    return Response({'Etat' : "Effectué avec succès"})
-
 @api_view(['GET'])
 def getRessourcesHumains(request):
     if request.method == 'GET':

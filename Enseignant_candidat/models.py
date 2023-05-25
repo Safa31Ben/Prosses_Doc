@@ -137,8 +137,7 @@ class Reclamation(models.Model):
                                     null=False, db_column='id_candidat', to_field='id_candidat')
     contenu = models.CharField(max_length=500, null=False, blank=False)
     date = models.DateTimeField(auto_now=True, null=False, blank=False)
-    Reponse = models.CharField(max_length=500, null=True, blank=False)
-
+    
     class Meta:
         db_table = 'reclamation'
 
