@@ -1,43 +1,140 @@
-from dataclasses import fields
+from django.contrib.auth.decorators import *
+from django.contrib.auth.models import update_last_login
+
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.settings import api_settings
+
+from .serializers import *
 from .models import *
+from Enseignant_candidat.models import *
 
-# For Profile pic
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        from django.core.files.base import ContentFile
-        import base64
-        import six
-        import uuid
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Utilisateur
+        fields = ["id", "username", "email", "nom", "prenom", "type"]
 
-        if isinstance(data, six.string_types):
-            if 'data:' in data and ';base64,' in data:
-                header, data = data.split(';base64,')
 
-            try:
-                decoded_file = base64.b64decode(data)
-            except TypeError:
-                self.fail('invalid_image')
+class CandidatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Candidat
+        fields = [
+            "universite",
+            "faculte",
+            "specailite"
+        ]
 
-            file_name = str(uuid.uuid4())[:12]
-            file_extension = self.get_file_extension(file_name, decoded_file)
 
-            complete_file_name = "%s.%s" % (file_name, file_extension, )
+class EnseignantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Enseignant
+        fields = [
+            "universite",
+            "faculte",
+            "specialite",
+            "grade",
+            "depertement"
+        ]
 
-            data = ContentFile(decoded_file, name=complete_file_name)
 
-        return super(Base64ImageField, self).to_internal_value(data)
+class UserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Utilisateur
+        fields = [
+            "id",
+            "type",
+            "username",
+            "email",
+            "nom",
+            "prenom",
+            "date_naissance"
+        ]
 
-    def get_file_extension(self, file_name, decoded_file):
-        import imghdr
 
-        extension = imghdr.what(file_name, decoded_file)
-        extension = "jpg" if extension == "jpeg" else extension
+class UserUpdateSerializer(serializers.ModelSerializer):
+    grade = serializers.CharField(required=False)
+    type = serializers.CharField(required=False)
+    password = serializers.CharField(required=False)
 
-        return extension
-    
-# class ClassSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Utilisateur
+        fields = [
+            "nom",
+            "prenom",
+            "date_naissance",
+            "password",
+            "type",
+            "grade",
+        ]
 
-#     class Meta:
-#         model = Class
-#         fields = '__all__'
+
+class UserRegisterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Utilisateur
+        fields = "__all__"
+        read_only_field = ["is_active", "created", "updated"]
+
+
+class LoginSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        refresh = self.get_token(self.user)
+
+        data["full_name"] = Utilisateur.objects.get(
+            id=UserSerializer(self.user).data["id"]
+        ).get_full_name()
+        data["id"] = UserSerializer(self.user).data["id"]
+        data["type"] = UserSerializer(self.user).data["type"]
+        data["refresh"] = str(refresh)
+        data["access"] = str(refresh.access_token)
+
+        if api_settings.UPDATE_LAST_LOGIN:
+            update_last_login(None, self.user)
+
+        return data
+
+
+class RegisterSerializer(UserRegisterSerializer):
+    password = serializers.CharField(
+        max_length=128, min_length=8, write_only=True, required=True
+    )
+    universite = serializers.CharField(required=False)
+    faculte = serializers.CharField(required=False)
+    specialite = serializers.CharField(required=False)
+    grade = serializers.CharField(required=False)
+    depertement = serializers.CharField(required=False)
+
+    class Meta:
+        model = Utilisateur
+        fields = [
+            "type",
+            "username",
+            "email",
+            "nom",
+            "prenom",
+            "date_naissance",
+            "password",
+            "universite",
+            "faculte",
+            "specialite",
+            "grade",
+            "depertement",
+        ]
+
+
+class EmplacementSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Emplacement
+        fields = "__all__"
+
+
+class ConcoursSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Concours
+        fields = "__all__"
+
+
+class SujetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Sujet
+        fields = ["description", "type"]
